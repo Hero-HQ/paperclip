@@ -40,10 +40,12 @@ import { issueService } from "./issues.js";
 import { executionWorkspaceService } from "./execution-workspaces.js";
 import {
   buildExecutionWorkspaceAdapterConfig,
+  gateProjectExecutionWorkspacePolicy,
   parseIssueExecutionWorkspaceSettings,
   parseProjectExecutionWorkspacePolicy,
   resolveExecutionWorkspaceMode,
 } from "./execution-workspace-policy.js";
+import { instanceSettingsService } from "./instance-settings.js";
 import { redactCurrentUserText, redactCurrentUserValue } from "../log-redaction.js";
 
 const MAX_LIVE_LOG_CHUNK_BYTES = 8 * 1024;
@@ -697,6 +699,8 @@ function resolveNextSessionState(input: {
 }
 
 export function heartbeatService(db: Db) {
+  const instanceSettings = instanceSettingsService(db);
+
   const runLogStore = getRunLogStore();
   const secretsSvc = secretService(db);
   const issuesSvc = issueService(db);
@@ -1661,9 +1665,10 @@ export function heartbeatService(db: Db) {
             issueAssigneeConfig.assigneeAdapterOverrides,
           )
         : null;
-    const issueExecutionWorkspaceSettings = parseIssueExecutionWorkspaceSettings(
-      issueAssigneeConfig?.executionWorkspaceSettings,
-    );
+    const isolatedWorkspacesEnabled = (await instanceSettings.getExperimental()).enableIsolatedWorkspaces;
+    const issueExecutionWorkspaceSettings = isolatedWorkspacesEnabled
+      ? parseIssueExecutionWorkspaceSettings(issueAssigneeConfig?.executionWorkspaceSettings)
+      : null;
     const contextProjectId = readNonEmptyString(context.projectId);
     const executionProjectId = issueAssigneeConfig?.projectId ?? contextProjectId;
     const projectExecutionWorkspacePolicy = executionProjectId
@@ -1671,7 +1676,11 @@ export function heartbeatService(db: Db) {
           .select({ executionWorkspacePolicy: projects.executionWorkspacePolicy })
           .from(projects)
           .where(and(eq(projects.id, executionProjectId), eq(projects.companyId, agent.companyId)))
-          .then((rows) => parseProjectExecutionWorkspacePolicy(rows[0]?.executionWorkspacePolicy))
+          .then((rows) =>
+            gateProjectExecutionWorkspacePolicy(
+              parseProjectExecutionWorkspacePolicy(rows[0]?.executionWorkspacePolicy),
+              isolatedWorkspacesEnabled,
+            ))
       : null;
     const taskSession = taskKey
       ? await getTaskSession(agent.companyId, agent.id, agent.adapterType, taskKey)

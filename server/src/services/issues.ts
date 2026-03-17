@@ -23,8 +23,10 @@ import { extractProjectMentionIds } from "@paperclipai/shared";
 import { conflict, notFound, unprocessable } from "../errors.js";
 import {
   defaultIssueExecutionWorkspaceSettingsForProject,
+  gateProjectExecutionWorkspacePolicy,
   parseProjectExecutionWorkspacePolicy,
 } from "./execution-workspace-policy.js";
+import { instanceSettingsService } from "./instance-settings.js";
 import { redactCurrentUserText } from "../log-redaction.js";
 import { resolveIssueGoalId, resolveNextIssueGoalId } from "./issue-goal-fallback.js";
 import { getDefaultCompanyGoal } from "./goals.js";
@@ -316,6 +318,8 @@ function withActiveRuns(
 }
 
 export function issueService(db: Db) {
+  const instanceSettings = instanceSettingsService(db);
+
   async function assertAssignableAgent(companyId: string, agentId: string) {
     const assignee = await db
       .select({
@@ -676,6 +680,12 @@ export function issueService(db: Db) {
       data: Omit<typeof issues.$inferInsert, "companyId"> & { labelIds?: string[] },
     ) => {
       const { labelIds: inputLabelIds, ...issueData } = data;
+      const isolatedWorkspacesEnabled = (await instanceSettings.getExperimental()).enableIsolatedWorkspaces;
+      if (!isolatedWorkspacesEnabled) {
+        delete issueData.executionWorkspaceId;
+        delete issueData.executionWorkspacePreference;
+        delete issueData.executionWorkspaceSettings;
+      }
       if (data.assigneeAgentId && data.assigneeUserId) {
         throw unprocessable("Issue can only have one assignee");
       }
@@ -706,7 +716,10 @@ export function issueService(db: Db) {
             .then((rows) => rows[0] ?? null);
           executionWorkspaceSettings =
             defaultIssueExecutionWorkspaceSettingsForProject(
-              parseProjectExecutionWorkspacePolicy(project?.executionWorkspacePolicy),
+              gateProjectExecutionWorkspacePolicy(
+                parseProjectExecutionWorkspacePolicy(project?.executionWorkspacePolicy),
+                isolatedWorkspacesEnabled,
+              ),
             ) as Record<string, unknown> | null;
         }
         let projectWorkspaceId = issueData.projectWorkspaceId ?? null;
@@ -779,6 +792,12 @@ export function issueService(db: Db) {
       if (!existing) return null;
 
       const { labelIds: nextLabelIds, ...issueData } = data;
+      const isolatedWorkspacesEnabled = (await instanceSettings.getExperimental()).enableIsolatedWorkspaces;
+      if (!isolatedWorkspacesEnabled) {
+        delete issueData.executionWorkspaceId;
+        delete issueData.executionWorkspacePreference;
+        delete issueData.executionWorkspaceSettings;
+      }
 
       if (issueData.status) {
         assertTransition(existing.status, issueData.status);

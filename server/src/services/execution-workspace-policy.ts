@@ -77,6 +77,14 @@ export function parseProjectExecutionWorkspacePolicy(raw: unknown): ProjectExecu
   };
 }
 
+export function gateProjectExecutionWorkspacePolicy(
+  projectPolicy: ProjectExecutionWorkspacePolicy | null,
+  isolatedWorkspacesEnabled: boolean,
+): ProjectExecutionWorkspacePolicy | null {
+  if (!isolatedWorkspacesEnabled) return null;
+  return projectPolicy;
+}
+
 export function parseIssueExecutionWorkspaceSettings(raw: unknown): IssueExecutionWorkspaceSettings | null {
   const parsed = parseObject(raw);
   if (Object.keys(parsed).length === 0) return null;

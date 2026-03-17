@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildExecutionWorkspaceAdapterConfig,
   defaultIssueExecutionWorkspaceSettingsForProject,
+  gateProjectExecutionWorkspacePolicy,
   parseIssueExecutionWorkspaceSettings,
   parseProjectExecutionWorkspacePolicy,
   resolveExecutionWorkspaceMode,
@@ -139,5 +140,20 @@ describe("execution workspace policy helpers", () => {
     ).toEqual({
       mode: "shared_workspace",
     });
+  });
+
+  it("disables project execution workspace policy when the instance flag is off", () => {
+    expect(
+      gateProjectExecutionWorkspacePolicy(
+        { enabled: true, defaultMode: "isolated_workspace" },
+        false,
+      ),
+    ).toBeNull();
+    expect(
+      gateProjectExecutionWorkspacePolicy(
+        { enabled: true, defaultMode: "isolated_workspace" },
+        true,
+      ),
+    ).toEqual({ enabled: true, defaultMode: "isolated_workspace" });
   });
 });

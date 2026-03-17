@@ -120,6 +120,8 @@ export {
 
 export type {
   Company,
+  InstanceExperimentalSettings,
+  InstanceSettings,
   Agent,
   AgentPermissions,
   AgentKeyCreated,
@@ -238,6 +240,12 @@ export type {
   QuotaWindow,
   ProviderQuotaResult,
 } from "./types/index.js";
+
+export {
+  instanceExperimentalSettingsSchema,
+  patchInstanceExperimentalSettingsSchema,
+  type PatchInstanceExperimentalSettings,
+} from "./validators/index.js";
 
 export {
   createCompanySchema,

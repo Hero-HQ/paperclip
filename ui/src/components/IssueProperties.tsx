@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { agentsApi } from "../api/agents";
 import { authApi } from "../api/auth";
 import { executionWorkspacesApi } from "../api/execution-workspaces";
+import { instanceSettingsApi } from "../api/instanceSettings";
 import { issuesApi } from "../api/issues";
 import { projectsApi } from "../api/projects";
 import { useCompany } from "../context/CompanyContext";
@@ -189,6 +190,10 @@ export function IssueProperties({ issue, onUpdate, inline }: IssuePropertiesProp
     queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
   });
+  const { data: experimentalSettings } = useQuery({
+    queryKey: queryKeys.instance.experimentalSettings,
+    queryFn: () => instanceSettingsApi.getExperimental(),
+  });
   const currentUserId = session?.user?.id ?? session?.session?.userId;
 
   const { data: agents } = useQuery({
@@ -258,7 +263,10 @@ export function IssueProperties({ issue, onUpdate, inline }: IssuePropertiesProp
   const currentProject = issue.projectId
     ? orderedProjects.find((project) => project.id === issue.projectId) ?? null
     : null;
-  const currentProjectExecutionWorkspacePolicy = currentProject?.executionWorkspacePolicy ?? null;
+  const currentProjectExecutionWorkspacePolicy =
+    experimentalSettings?.enableIsolatedWorkspaces === true
+      ? currentProject?.executionWorkspacePolicy ?? null
+      : null;
   const currentProjectSupportsExecutionWorkspace = Boolean(currentProjectExecutionWorkspacePolicy?.enabled);
   const currentExecutionWorkspaceSelection =
     issue.executionWorkspacePreference

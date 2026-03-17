@@ -1,4 +1,11 @@
 export {
+  instanceExperimentalSettingsSchema,
+  patchInstanceExperimentalSettingsSchema,
+  type InstanceExperimentalSettings,
+  type PatchInstanceExperimentalSettings,
+} from "./instance.js";
+
+export {
   upsertBudgetPolicySchema,
   resolveBudgetIncidentSchema,
   type UpsertBudgetPolicy,

@@ -4,6 +4,7 @@ import { useDialog } from "../context/DialogContext";
 import { useCompany } from "../context/CompanyContext";
 import { executionWorkspacesApi } from "../api/execution-workspaces";
 import { issuesApi } from "../api/issues";
+import { instanceSettingsApi } from "../api/instanceSettings";
 import { projectsApi } from "../api/projects";
 import { agentsApi } from "../api/agents";
 import { authApi } from "../api/auth";
@@ -341,6 +342,11 @@ export function NewIssueDialog() {
     queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
   });
+  const { data: experimentalSettings } = useQuery({
+    queryKey: queryKeys.instance.experimentalSettings,
+    queryFn: () => instanceSettingsApi.getExperimental(),
+    enabled: newIssueOpen,
+  });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
   const activeProjects = useMemo(
     () => (projects ?? []).filter((p) => !p.archivedAt),
@@ -635,7 +641,10 @@ export function NewIssueDialog() {
       chrome: assigneeChrome,
     });
     const selectedProject = orderedProjects.find((project) => project.id === projectId);
-    const executionWorkspacePolicy = selectedProject?.executionWorkspacePolicy ?? null;
+    const executionWorkspacePolicy =
+      experimentalSettings?.enableIsolatedWorkspaces === true
+        ? selectedProject?.executionWorkspacePolicy ?? null
+        : null;
     const selectedReusableExecutionWorkspace = deduplicatedReusableWorkspaces.find(
       (workspace) => workspace.id === selectedExecutionWorkspaceId,
     );
@@ -743,7 +752,10 @@ export function NewIssueDialog() {
     ? (agents ?? []).find((a) => a.id === selectedAssigneeAgentId)
     : null;
   const currentProject = orderedProjects.find((project) => project.id === projectId);
-  const currentProjectExecutionWorkspacePolicy = currentProject?.executionWorkspacePolicy ?? null;
+  const currentProjectExecutionWorkspacePolicy =
+    experimentalSettings?.enableIsolatedWorkspaces === true
+      ? currentProject?.executionWorkspacePolicy ?? null
+      : null;
   const currentProjectSupportsExecutionWorkspace = Boolean(currentProjectExecutionWorkspacePolicy?.enabled);
   const deduplicatedReusableWorkspaces = useMemo(() => {
     const workspaces = reusableExecutionWorkspaces ?? [];
@@ -1106,9 +1118,9 @@ export function NewIssueDialog() {
         </div>
 
         {currentProject && (
-          <div className="px-4 pb-2 shrink-0 space-y-2">
+          <div className="px-4 py-3 shrink-0 space-y-2">
             {currentProjectSupportsExecutionWorkspace && (
-              <div className="rounded-md border border-border px-3 py-2 space-y-1.5">
+              <div className="space-y-1.5">
                 <div className="text-xs font-medium">Execution workspace</div>
                 <div className="text-[11px] text-muted-foreground">
                   Control whether this issue runs in the shared workspace, a new isolated workspace, or an existing one.

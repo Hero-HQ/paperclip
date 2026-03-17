@@ -69,6 +69,7 @@ export const queryKeys = {
   },
   instance: {
     schedulerHeartbeats: ["instance", "scheduler-heartbeats"] as const,
+    experimentalSettings: ["instance", "experimental-settings"] as const,
   },
   health: ["health"] as const,
   secrets: {
