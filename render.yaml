@@ -48,6 +48,8 @@ services:
         value: public
       - key: PAPERCLIP_ALLOWED_HOSTNAMES
         value: paperclip-m2ko.onrender.com
+      - key: PAPERCLIP_AUTH_BASE_URL_MODE
+        value: explicit
       - key: NODE_ENV
         value: production
       - key: HOST
