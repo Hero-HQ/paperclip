@@ -5,7 +5,7 @@
 
 databases:
   - name: paperclip-db
-    plan: starter
+    plan: basic
     databaseName: paperclip
     user: paperclip
 
