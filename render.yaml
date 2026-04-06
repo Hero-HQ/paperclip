@@ -23,49 +23,54 @@ services:
       mountPath: /paperclip
       sizeGB: 5
 
-    # Health check
+    # Health check — /api/health returns 200 when DB is reachable
     healthCheckPath: /api/health
 
     envVars:
-      # PostgreSQL connection (auto-linked from Render database)
+      # ── Database ──────────────────────────────────────────────────────────
       - key: DATABASE_URL
         fromDatabase:
           name: paperclip-db
           property: connectionString
 
-      # Auth secret — generate with: openssl rand -hex 32
+      # ── Auth ──────────────────────────────────────────────────────────────
+      # Required: random secret for session signing
+      # Generate: openssl rand -hex 32
       - key: BETTER_AUTH_SECRET
         sync: false
 
-      # Public URL — set to your Render domain
+      # Public URL of this service — used for auth redirects + allowed hostnames
+      # Set to: https://paperclip-m2ko.onrender.com  (your Render URL)
       - key: PAPERCLIP_PUBLIC_URL
-        sync: false
+        value: https://paperclip-m2ko.onrender.com
 
-      # Deployment config
+      # explicit mode is auto-enabled when PAPERCLIP_PUBLIC_URL is set
+      # DO NOT set PAPERCLIP_AUTH_BASE_URL_MODE manually — let it auto-resolve
+
+      # ── Deployment ────────────────────────────────────────────────────────
       - key: PAPERCLIP_DEPLOYMENT_MODE
         value: authenticated
       - key: PAPERCLIP_DEPLOYMENT_EXPOSURE
         value: public
-      - key: PAPERCLIP_ALLOWED_HOSTNAMES
-        value: paperclip-m2ko.onrender.com
-      - key: PAPERCLIP_AUTH_BASE_URL_MODE
-        value: explicit
-      - key: NODE_ENV
-        value: production
+
+      # ── Server ────────────────────────────────────────────────────────────
       - key: HOST
         value: "0.0.0.0"
       - key: SERVE_UI
         value: "true"
+      - key: NODE_ENV
+        value: production
 
-      # Disable sign-up after first admin (recommended)
+      # ── Sign-up ───────────────────────────────────────────────────────────
+      # false = allow sign-up (needed for first admin account creation)
       - key: PAPERCLIP_AUTH_DISABLE_SIGN_UP
         value: "false"
 
-      # Optional: Anthropic key for agent LLM calls
+      # ── Optional: Anthropic key ───────────────────────────────────────────
       - key: ANTHROPIC_API_KEY
         sync: false
 
-      # Backup config
+      # ── Backups ───────────────────────────────────────────────────────────
       - key: PAPERCLIP_DB_BACKUP_ENABLED
         value: "true"
       - key: PAPERCLIP_DB_BACKUP_INTERVAL_MINUTES
