@@ -59,10 +59,8 @@ services:
       - key: PAPERCLIP_AUTH_DISABLE_SIGN_UP
         value: "false"
 
-      # Optional: LLM keys (for agents that need them)
+      # Optional: Anthropic key for agent LLM calls
       - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
         sync: false
 
       # Backup config
