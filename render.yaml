@@ -1,0 +1,74 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paperclip AI — Render Blueprint for Deeply Brain control plane
+# Deploy: Connect this repo in Render dashboard → "New Blueprint Instance"
+# ─────────────────────────────────────────────────────────────────────────────
+
+databases:
+  - name: paperclip-db
+    plan: starter
+    databaseName: paperclip
+    user: paperclip
+
+services:
+  - type: web
+    name: paperclip
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    autoDeploy: false
+    plan: starter
+
+    # Persistent storage for config, secrets, workspaces, backups
+    disk:
+      name: paperclip-data
+      mountPath: /paperclip
+      sizeGB: 5
+
+    # Health check
+    healthCheckPath: /api/health
+
+    envVars:
+      # PostgreSQL connection (auto-linked from Render database)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: paperclip-db
+          property: connectionString
+
+      # Auth secret — generate with: openssl rand -hex 32
+      - key: BETTER_AUTH_SECRET
+        sync: false
+
+      # Public URL — set to your Render domain
+      - key: PAPERCLIP_PUBLIC_URL
+        sync: false
+
+      # Deployment config
+      - key: PAPERCLIP_DEPLOYMENT_MODE
+        value: authenticated
+      - key: PAPERCLIP_DEPLOYMENT_EXPOSURE
+        value: private
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "3100"
+      - key: SERVE_UI
+        value: "true"
+
+      # Disable sign-up after first admin (recommended)
+      - key: PAPERCLIP_AUTH_DISABLE_SIGN_UP
+        value: "false"
+
+      # Optional: LLM keys (for agents that need them)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+      # Backup config
+      - key: PAPERCLIP_DB_BACKUP_ENABLED
+        value: "true"
+      - key: PAPERCLIP_DB_BACKUP_INTERVAL_MINUTES
+        value: "60"
+      - key: PAPERCLIP_DB_BACKUP_RETENTION_DAYS
+        value: "30"
