@@ -39,6 +39,15 @@ services:
       - key: BETTER_AUTH_SECRET
         sync: false
 
+      # Admin auto-setup: set these and the first deploy creates your admin account automatically
+      # No invite URLs, no manual bootstrap commands needed
+      - key: PAPERCLIP_ADMIN_EMAIL
+        sync: false
+      - key: PAPERCLIP_ADMIN_PASSWORD
+        sync: false
+      - key: PAPERCLIP_ADMIN_NAME
+        value: Deeply Admin
+
       # Public URL of this service — used for auth redirects + allowed hostnames
       # Set to: https://paperclip-m2ko.onrender.com  (your Render URL)
       - key: PAPERCLIP_PUBLIC_URL
