@@ -5,7 +5,7 @@
 
 databases:
   - name: paperclip-db
-    plan: basic
+    plan: basic-256mb
     databaseName: paperclip
     user: paperclip
 
